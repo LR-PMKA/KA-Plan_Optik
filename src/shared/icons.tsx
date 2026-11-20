@@ -11,6 +11,7 @@ import {
   Bell,
   BookUser,
   CalendarDays,
+  ChartColumn,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -21,6 +22,7 @@ import {
   Diamond,
   Download,
   Ellipsis,
+  FileClock,
   FileText,
   Flag,
   Folder,
@@ -28,6 +30,7 @@ import {
   Info,
   LayoutGrid,
   List,
+  Lock,
   Mail,
   Menu,
   Package,
@@ -80,6 +83,8 @@ const symbole = {
   kopieren: Copy,
   // Klemmbrett mit Textzeilen – Protokolle und Projektsteuerung
   protokoll: ClipboardList,
+  // Blatt mit Uhr – Leistungsnachweise und erfasste Stunden
+  stunden: FileClock,
   // Workflow-Editor: Rückgängig/Wiederholen, Schrittarten, Start und Ende
   rueckgaengig: Undo2,
   wiederholen: Redo2,
@@ -89,6 +94,9 @@ const symbole = {
   ziel: Flag,
   schleife: RefreshCw,
   info: Info,
+  // Controlling: Schloss (PIN) und Säulendiagramm (Auswertung)
+  schloss: Lock,
+  diagramm: ChartColumn,
   // Archivkarton – Archiv der Projektlisten
   archiv: Archive,
   mehr: Ellipsis,

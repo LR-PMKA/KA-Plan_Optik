@@ -20,7 +20,7 @@ from pathlib import Path
 from PIL import Image
 
 ORDNER = Path(__file__).resolve().parent.parent / 'public' / 'logos'
-LOGOS = ['Startseite', 'Planlaufmanagement', 'Baubetriebsplanung', 'Projektsteuerung']
+LOGOS = ['Startseite', 'Planlaufmanagement', 'Baubetriebsplanung', 'Projektsteuerung', 'Leistungsnachweise', 'Controlling']
 
 WEISS = (255, 255, 255)
 
