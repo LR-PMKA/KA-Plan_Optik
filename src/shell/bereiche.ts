@@ -3,11 +3,12 @@
  * Datenbestand, eigene Einstellungen, eigener Router. Hier steht nur, was die
  * Bereichsauswahl anzeigen muss – die Bereiche selbst wissen nichts
  * voneinander. Gemeinsam sind ihnen nur das Projektregister und „Angemeldet
- * als“ (`src/gemeinsam/`).
+ * als“ (`src/gemeinsam/`). Das Controlling hat keinen eigenen Bestand: Es
+ * verwaltet die Projekte aller Bereiche im Projektregister.
  */
 import type { IconName } from '../shared/icons';
 
-export type BereichId = 'planlauf' | 'baubetrieb' | 'projektsteuerung';
+export type BereichId = 'planlauf' | 'baubetrieb' | 'projektsteuerung' | 'leistungsnachweise' | 'controlling';
 
 export interface Bereich {
   id: BereichId;
@@ -38,6 +39,20 @@ export const BEREICHE: Bereich[] = [
     untertitel: 'Beteiligte und Protokolle',
     icon: 'protokoll',
     marke: 'Erster Entwurf',
+  },
+  {
+    id: 'leistungsnachweise',
+    titel: 'Leistungsnachweise',
+    untertitel: 'Stunden und Leistungen je Projekt',
+    icon: 'stunden',
+    marke: 'Erster Entwurf',
+  },
+  {
+    id: 'controlling',
+    titel: 'Controlling',
+    untertitel: 'Projekte aller Bereiche',
+    icon: 'schloss',
+    marke: 'Mit PIN',
   },
 ];
 

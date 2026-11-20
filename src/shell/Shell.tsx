@@ -6,6 +6,8 @@
  */
 import { useLayoutEffect } from 'react';
 import { BereichBaubetrieb } from '../bereiche/baubetrieb';
+import { BereichControlling } from '../bereiche/controlling';
+import { BereichLeistungsnachweise } from '../bereiche/leistungsnachweise';
 import { BereichPlanlauf } from '../bereiche/planlauf';
 import { BereichProjektsteuerung } from '../bereiche/projektsteuerung';
 import { GERAET_DUNKEL, SEITENGRUND, istDunkel, useBenutzer } from '../gemeinsam/benutzer';
@@ -54,6 +56,10 @@ export function Shell() {
         <BereichBaubetrieb />
       ) : bereich === 'projektsteuerung' ? (
         <BereichProjektsteuerung />
+      ) : bereich === 'leistungsnachweise' ? (
+        <BereichLeistungsnachweise />
+      ) : bereich === 'controlling' ? (
+        <BereichControlling />
       ) : (
         <Start />
       )}

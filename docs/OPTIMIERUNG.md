@@ -28,6 +28,24 @@ Stand: 12.11.2026, nach dem Entfernen der Bereiche Leistungsnachweise und Contro
 > * **Menüleiste:** im hellen Schema hell, dunkel nur im dunklen Schema – in allen drei Bereichen
 >   gleich (`.sidebar` in `src/shared/global.css`).
 
+> **Nachtrag 20.11.2026 – Leistungsnachweise und Controlling wieder da.** Beide Bereiche sind aus dem
+> Branch `backup/2026-11-12-mit-leistungsnachweisen-und-controlling` zurückgeholt und in den heutigen
+> Stand eingepflegt (Koralle-Design, Projektregister Fassung 4). Die Liste unten vergleicht weiterhin
+> nur Planlaufmanagement, Baubetriebsplanung und Projektsteuerung; die Leistungsnachweise und das
+> Controlling sind darin **nicht durchgesehen**. Berührt sind diese Punkte:
+>
+> * **Archiv:** Das Archiv je Bereich (`ArchivKnopf`, `ArchivHinweis`) bleibt. Daneben archiviert das
+>   Controlling wieder für alle Bereiche; ein so archiviertes Projekt holt nur das Controlling zurück.
+>   Die Leistungsnachweise haben keinen eigenen Knopf *Archivieren* – dort archiviert das Controlling.
+> * **Wo „drei Bereiche“ steht** (Projektlisten, Leerzustände der Suche, „Projekte aus anderen
+>   Bereichen“ nur bei geladenem Bestand, `RegisterHinweis`): Die gemeinsamen Bausteine nutzt jetzt
+>   auch die Projektliste der Leistungsnachweise; den `RegisterHinweis` zeigen auch die
+>   Leistungsnachweise und das Controlling.
+> * **Offen für einen späteren Vergleich:** Die Leistungsnachweise führen eigene Hinweise nach einem
+>   Ladefehler und bei vollem Speicher (`LadeHinweis` in `src/bereiche/leistungsnachweise/App.tsx`,
+>   `components/SpeicherHinweis.tsx`) statt der Hinweisleisten der anderen Bereiche; im Dialog
+>   „Einstellungen“ des Controllings der Leistungsnachweise stehen Karten in einem Dialog.
+
 Diese Liste beantwortet die Frage: **Wo lösen Planlaufmanagement, Baubetriebsplanung und
 Projektsteuerung dasselbe unterschiedlich – in der Funktion, im Wortlaut, in der Optik oder im
 Code?** Sie ist zum Durchgehen gedacht: Jeder Punkt hat eine Kennung, eine Einschätzung und eine

@@ -3,8 +3,9 @@ import { useState } from 'react';
 /**
  * Bildmarken der Anwendung.
  *
- * Die Logos von KaPlan liegen als PNG unter `public/logos/` (je Bereich
- * eines, dazu das Logo der Startseite und das Symbol `Logo.png`). Gezeichnet
+ * Die Logos von KaPlan liegen als PNG unter `public/logos/` (je Bereich und
+ * für das Controlling eines, dazu das Logo der Startseite und das Symbol
+ * `Logo.png`). Gezeichnet
  * sind sie für hellen Grund – dunkle Schrift, Dreieck in Blau und Grau. Für
  * das dunkle Schema gibt es je Logo die Fassung `…_dunkel.png`: Schrift und
  * Grau in Weiß, der blaue Teil des Dreiecks unverändert
@@ -23,13 +24,17 @@ export type KaPlanLogo =
   | 'Startseite'
   | 'Planlaufmanagement'
   | 'Baubetriebsplanung'
-  | 'Projektsteuerung';
+  | 'Projektsteuerung'
+  | 'Leistungsnachweise'
+  | 'Controlling';
 
 const KAPLAN_TEXT: Record<KaPlanLogo, string> = {
   Startseite: 'KaPlan',
   Planlaufmanagement: 'KaPlan – Planlaufmanagement',
   Baubetriebsplanung: 'KaPlan – Baubetriebsplanung',
   Projektsteuerung: 'KaPlan – Projektsteuerung',
+  Leistungsnachweise: 'KaPlan – Leistungsnachweise',
+  Controlling: 'KaPlan – Controlling',
 };
 
 /**

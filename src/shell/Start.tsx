@@ -3,7 +3,8 @@
  * (src/shared/pwa.ts). Im Koralle-Design mit Tailwind-Utilities gebaut: oben
  * Logo und Wortmarke, darunter Datum und Aufforderung wie der Kopf der
  * Vorlage, dann je Bereich eine Karte, die sich beim Überfahren anhebt. Die
- * Karten stehen ab 768 px dreispaltig, darunter untereinander.
+ * fünf Karten stehen ab 1280 px in einer Reihe, ab 768 px dreispaltig (drei
+ * und zwei), ab 640 px zweispaltig, darunter untereinander.
  */
 import { motion } from 'framer-motion';
 import { FEDER, KURVE } from '../shared/bewegung';
@@ -18,7 +19,7 @@ export function Start() {
 
   return (
     <div className="start">
-      <div className="mx-auto flex min-h-full w-full max-w-[1120px] flex-col px-4 py-5 sm:px-8 sm:py-7">
+      <div className="mx-auto flex min-h-full w-full max-w-[1120px] flex-col px-4 py-5 sm:px-8 sm:py-7 xl:max-w-[1440px]">
         <header className="flex items-center justify-between gap-3">
           <h1 className="w-[190px]">
             <KaPlanLogo variante="Startseite" width="100%" />
@@ -32,7 +33,7 @@ export function Start() {
           <p className="text-sm text-gedaempft">{heute}</p>
           <p className="mt-1 text-2xl font-medium tracking-tight sm:text-3xl">Bitte einen Bereich wählen.</p>
 
-          <div className="mt-7 grid gap-4 md:grid-cols-3">
+          <div className="mt-7 grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
             {BEREICHE.map((b, i) => (
               <motion.button
                 key={b.id}
@@ -67,7 +68,7 @@ export function Start() {
         <p className="mx-auto max-w-[760px] pt-4 text-center text-xs leading-relaxed text-gedaempft max-md:text-left">
           Die Bereiche arbeiten unabhängig voneinander – jeder mit eigenem Datenbestand. Gemeinsam sind
           „Angemeldet als“ (Name und Farbmodus) und das Projektregister, über das sie sich Projekte und
-          Projektbeteiligte teilen. Daten werden lokal im Browser gespeichert.
+          Projektbeteiligte teilen und das das Controlling verwaltet. Daten werden lokal im Browser gespeichert.
           <span className="mt-1.5 block">Fassung vom {fassungText(FASSUNG)}</span>
         </p>
       </div>

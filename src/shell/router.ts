@@ -6,9 +6,8 @@
  *   #/planlauf/…              Planlaufmanagement
  *   #/baubetrieb/…            Baubetriebsplanung
  *   #/projektsteuerung/…      Projektsteuerung
- *
- * Adressen der früheren Bereiche Leistungsnachweise und Controlling
- * (`#/leistungsnachweise/…`, `#/controlling/…`) führen zur Bereichsauswahl.
+ *   #/leistungsnachweise/…    Leistungsnachweise
+ *   #/controlling/…           Controlling (mit PIN)
  */
 import { useEffect, useState } from 'react';
 import { BEREICH_IDS, type BereichId } from './bereiche';
@@ -27,15 +26,10 @@ export function bereichAusHash(hash: string): BereichId | null {
   return (BEREICH_IDS as string[]).includes(erste) ? (erste as BereichId) : null;
 }
 
-/** Erste Wegmarken der entfernten Bereiche – ihre Lesezeichen führen zur Bereichsauswahl. */
-const ENTFERNTE_BEREICHE = ['leistungsnachweise', 'controlling'];
-
 /** Zieladresse für ein altes Lesezeichen, sonst null. */
 export function umgelenkterHash(hash: string): string | null {
   const teile = wegmarken(hash);
-  if (teile.length === 0) return null;
-  if (ENTFERNTE_BEREICHE.includes(teile[0])) return '#/';
-  if (!ALTE_WURZELN.includes(teile[0])) return null;
+  if (teile.length === 0 || !ALTE_WURZELN.includes(teile[0])) return null;
   return `#/planlauf/${teile.join('/')}`;
 }
 

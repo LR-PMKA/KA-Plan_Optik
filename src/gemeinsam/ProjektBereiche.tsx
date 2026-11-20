@@ -2,16 +2,22 @@
  * Oberflächenbausteine zum Projektregister, die alle Bereiche verwenden:
  *
  * * `BereichsMarken` – unten in der Projektkachel: in welchen anderen
- *   Bereichen das Projekt noch geführt wird,
+ *   Bereichen das Projekt noch geführt wird – ohne die Leistungsnachweise,
+ *   die jedes Projekt führen (`genannteBereiche`), außer dort selbst,
  * * `FremdeProjekte` – grau hinterlegter Abschnitt „Projekte aus anderen
- *   Bereichen“ mit „Übernehmen in …“,
+ *   Bereichen“ mit „Übernehmen in …“; führt kein genannter Bereich das
+ *   Projekt, nennt die Karte seine Herkunft (`herkunftOhneBereich`),
  * * `useSucheOhneTreffer` – Leerzustand der Projektlisten bei einer Suche ohne
  *   aktiven Treffer (nennt Treffer im Archiv und in anderen Bereichen),
  * * `andereBereiche`, `useLoeschHinweis` – für Löschdialoge,
  * * `ArchivKnopf`, `useArchivierbar`, `ArchivHinweis`, `ArchivAbschnitt`, `useArchivierte` – das
  *   Archiv je Bereich: Archiviert wird im Projekt („Archivieren“), zurückgeholt
  *   im archivierten Projekt („Aus dem Archiv holen“); der Archivstand steht
- *   allein im Register (`bereichArchivieren`),
+ *   allein im Register (`bereichArchivieren`). Daneben archiviert das
+ *   Controlling für alle Bereiche (`RegisterProjekt.archiviert`) – ein so
+ *   archiviertes Projekt holt nur das Controlling zurück,
+ * * `useMarkiertAnderswo` – in einem anderen Bereich mit ★ markierte Projekte
+ *   (für die Leistungsnachweise),
  * * `VerknuepfungsHinweis` – beim Anlegen: Das Projekt gibt es schon,
  * * `RegisterBeteiligte` – die geteilten Projektbeteiligten zum Nachschlagen.
  */
@@ -22,11 +28,13 @@ import { Badge, Callout, Card, CardHeader, EmptyState } from '../shared/ui';
 import { bereichArchivieren, inBereichUebernehmen } from './abgleich';
 import {
   BEREICH_TITEL,
+  JEDES_PROJEKT_IN,
   PROJEKT_BEREICHE,
-  andereBereicheVon,
   archivierteIds,
   funktionText,
+  genannteBereiche,
   istArchiviert,
+  markiertAnderswo,
   personName,
   projektImBereich,
   projektTitel,
@@ -39,15 +47,24 @@ import {
 } from './register';
 import './gemeinsam.css';
 
-/** Kennungen der im Bereich archivierten Projekte. */
+/** Kennungen der im Bereich archivierten Projekte – im Bereich selbst oder im Controlling. */
 export function useArchivierte(bereich: ProjektBereich): Set<ID> {
   const register = useRegister();
   return useMemo(() => archivierteIds(register, bereich), [register, bereich]);
 }
 
 /**
+ * Projekte des Bereichs, die ein anderer Bereich mit ★ markiert hat – je
+ * Kennung die Titel dieser Bereiche (`markiertAnderswo`).
+ */
+export function useMarkiertAnderswo(bereich: ProjektBereich): Map<ID, string[]> {
+  const register = useRegister();
+  return useMemo(() => markiertAnderswo(register, bereich), [register, bereich]);
+}
+
+/**
  * Titel der anderen Bereiche, die das Projekt führen, etwa „Planlaufmanagement
- * und Projektsteuerung“.
+ * und Projektsteuerung“ – ohne die Leistungsnachweise, außer dort selbst (`genannteBereiche`).
  */
 export function andereBereiche(register: Register, bereich: ProjektBereich, lokaleId: ID): string {
   return bereicheMitStand(register, bereich, lokaleId, false);
@@ -56,22 +73,62 @@ export function andereBereiche(register: Register, bereich: ProjektBereich, loka
 function bereicheMitStand(register: Register, bereich: ProjektBereich, lokaleId: ID, offen: boolean): string {
   const p = projektImBereich(register, bereich, lokaleId);
   if (!p) return '';
-  const andere = andereBereicheVon(bereich);
-  const titel = PROJEKT_BEREICHE.filter((b) => andere.includes(b.id) && p.bereiche[b.id] && p.bereiche[b.id]!.offen === offen).map((b) => b.titel);
+  const genannt = genannteBereiche(bereich);
+  const titel = PROJEKT_BEREICHE.filter((b) => genannt.includes(b.id) && p.bereiche[b.id] && p.bereiche[b.id]!.offen === offen).map((b) => b.titel);
   return titel.length <= 1 ? (titel[0] ?? '') : `${titel.slice(0, -1).join(', ')} und ${titel[titel.length - 1]}`;
 }
 
-/** Hinweis für Löschdialoge: Was in den anderen Bereichen bleibt. */
+/**
+ * Hinweis für Löschdialoge: Was in den anderen Bereichen bleibt. Führt sonst
+ * nur `JEDES_PROJEKT_IN` das Projekt, bleibt es dort – und steht danach hier
+ * unter „Projekte aus anderen Bereichen“; ganz löscht es nur das Controlling.
+ */
 export function useLoeschHinweis(bereich: ProjektBereich, lokaleId: ID): string {
   const register = useRegister();
   const andere = andereBereiche(register, bereich, lokaleId);
-  return andere ? ` In ${andere} bleibt das Projekt mit seinen Projektbeteiligten erhalten.` : '';
+  if (andere) return ` In ${andere} bleibt das Projekt mit seinen Projektbeteiligten erhalten.`;
+  const p = projektImBereich(register, bereich, lokaleId);
+  if (p && bereich !== JEDES_PROJEKT_IN && p.bereiche[JEDES_PROJEKT_IN]) {
+    return ` In den Leistungsnachweisen bleibt das Projekt mit seinen Leistungen und Projektbeteiligten erhalten und steht danach hier unter „Projekte aus anderen Bereichen“; ganz löschen lässt es sich nur im Controlling unter „Projekte“.`;
+  }
+  return '';
 }
 
-/** Marken der Bereiche eines Registerprojekts – aus Sicht des Bereichs `aus`, dessen eigene Marke entfällt. */
-function ProjektMarken({ projekt, aus, label }: { projekt: RegisterProjekt; aus: ProjektBereich; label?: string }) {
-  const andere = andereBereicheVon(aus);
-  const marken = PROJEKT_BEREICHE.filter((b) => andere.includes(b.id) && projekt.bereiche[b.id]);
+/**
+ * Herkunft eines Projekts unter „Projekte aus anderen Bereichen“, wenn kein
+ * genannter Bereich es führt: im Controlling angelegt, hier gelöscht bzw. nur
+ * in `JEDES_PROJEKT_IN` geführt.
+ */
+function herkunftOhneBereich(p: RegisterProjekt, bereich: ProjektBereich): string | null {
+  if (p.herkunft === 'controlling') return 'Im Controlling angelegt';
+  if (!p.bereiche[JEDES_PROJEKT_IN]) return null;
+  // Dativ von `JEDES_PROJEKT_IN` („Leistungsnachweise“)
+  return p.herkunft === bereich ? 'Hier gelöscht – weiter in den Leistungsnachweisen geführt' : 'Nur in den Leistungsnachweisen geführt';
+}
+
+/**
+ * Archiviert in allen Bereichen, auf die es aus Sicht des Bereichs `aus`
+ * ankommt: im Controlling für alle Bereiche – oder in jedem einzeln. Gezählt
+ * werden die genannten Bereiche (`genannteBereiche`); die Leistungsnachweise
+ * führen jedes Projekt von selbst mit und zählen nur, wenn kein anderer
+ * Bereich das Projekt führt.
+ */
+function ueberallArchiviert(p: RegisterProjekt, aus: ProjektBereich): boolean {
+  if (p.archiviert) return true;
+  const genannt = genannteBereiche(aus);
+  const gefuehrt = PROJEKT_BEREICHE.map((b) => b.id).filter((b) => p.bereiche[b]);
+  const massgeblich = gefuehrt.some((b) => genannt.includes(b)) ? gefuehrt.filter((b) => genannt.includes(b)) : gefuehrt;
+  return massgeblich.length > 0 && massgeblich.every((b) => p.bereiche[b]!.archiviert);
+}
+
+/**
+ * Marken der Bereiche eines Registerprojekts – aus Sicht des Bereichs `aus`
+ * (dessen eigene Marke und die der Leistungsnachweise entfallen,
+ * `genannteBereiche`); ohne `aus` alle (Controlling).
+ */
+export function ProjektMarken({ projekt, aus, label }: { projekt: RegisterProjekt; aus?: ProjektBereich; label?: string }) {
+  const genannt = genannteBereiche(aus ?? null);
+  const marken = PROJEKT_BEREICHE.filter((b) => genannt.includes(b.id) && projekt.bereiche[b.id]);
   if (marken.length === 0) return null;
   return (
     <div className="gem-marken">
@@ -108,11 +165,6 @@ export function BereichsMarken({ bereich, lokaleId }: { bereich: ProjektBereich;
 }
 
 /**
- * Archiviert das Projekt im Bereich bzw. holt es zurück – der Archivstand
- * steht allein im Register. `archiviert` ist null, solange das Register das
- * Projekt nicht kennt (etwa, weil es sich nicht lesen ließ).
- */
-/**
  * Wohin der Tastaturfokus nach „Archivieren“ bzw. „Aus dem Archiv holen“ geht:
  * Der gedrückte Knopf verschwindet, der Fokus fiele auf `body` – und der
  * nächste Tab auf „Löschen“. Er geht an das Element, das dafür erscheint
@@ -121,12 +173,23 @@ export function BereichsMarken({ bereich, lokaleId }: { bereich: ProjektBereich;
  */
 let fokusNachArchiv: 'hinweis' | 'knopf' | null = null;
 
-function useArchiv(bereich: ProjektBereich, lokaleId: ID): { archiviert: boolean | null; setzen: (an: boolean) => void } {
+/**
+ * Archiviert das Projekt im Bereich bzw. holt es zurück – der Archivstand
+ * steht allein im Register. `archiviert` ist null, solange das Register das
+ * Projekt nicht kennt (etwa, weil es sich nicht lesen ließ). `fuerAlle`: Das
+ * Controlling hat das Projekt für alle Bereiche archiviert – das hebt nur das
+ * Controlling wieder auf.
+ */
+function useArchiv(
+  bereich: ProjektBereich,
+  lokaleId: ID,
+): { archiviert: boolean | null; fuerAlle: boolean; setzen: (an: boolean) => void } {
   const register = useRegister();
   const toast = useToast();
   const p = projektImBereich(register, bereich, lokaleId);
   return {
     archiviert: p ? istArchiviert(p, bereich) : null,
+    fuerAlle: !!p?.archiviert,
     setzen: (an) => {
       if (!p) return;
       const ziel = an ? 'hinweis' : 'knopf';
@@ -182,9 +245,23 @@ export function ArchivKnopf({ bereich, lokaleId, klein = false }: { bereich: Pro
   );
 }
 
-/** Archivhinweis oben im Projekt, mit „Aus dem Archiv holen“. */
-export function ArchivHinweis({ bereich, lokaleId }: { bereich: ProjektBereich; lokaleId: ID }) {
-  const { archiviert, setzen } = useArchiv(bereich, lokaleId);
+/**
+ * Archivhinweis oben im Projekt, mit „Aus dem Archiv holen“. Ohne Knopf – dann
+ * verweist er auf das Controlling –, wenn das Controlling das Projekt für alle
+ * Bereiche archiviert hat oder der Bereich selbst nicht archiviert
+ * (`nurImControlling`: die Leistungsnachweise, in denen das Controlling die
+ * Projekte verwaltet).
+ */
+export function ArchivHinweis({
+  bereich,
+  lokaleId,
+  nurImControlling = false,
+}: {
+  bereich: ProjektBereich;
+  lokaleId: ID;
+  nurImControlling?: boolean;
+}) {
+  const { archiviert, fuerAlle, setzen } = useArchiv(bereich, lokaleId);
   const knopf = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     // focus() holt den Hinweis zugleich ins Bild, wenn weiter unten archiviert wurde
@@ -194,6 +271,14 @@ export function ArchivHinweis({ bereich, lokaleId }: { bereich: ProjektBereich; 
     }
   }, [archiviert]);
   if (!archiviert) return null;
+  if (fuerAlle || nurImControlling) {
+    const wo = fuerAlle ? 'im Controlling für alle Bereiche' : `in ${BEREICH_TITEL[bereich]}`;
+    return (
+      <Callout icon="🗄">
+        {`Dieses Projekt ist ${wo} archiviert. Es erscheint nicht in Übersicht und Seitenleiste; zurückholen lässt es sich im Controlling.`}
+      </Callout>
+    );
+  }
   return (
     <Callout icon="🗄">
       <div className="gem-archivhinweis">
@@ -228,7 +313,7 @@ export function ArchivAbschnitt({ anzahl, children }: { anzahl: number; children
 function fremdeTreffer(register: Register, bereich: ProjektBereich, suche: string): RegisterProjekt[] {
   const begriff = suche.trim().toLowerCase();
   return register.projekte
-    .filter((p) => !p.bereiche[bereich] && !Object.values(p.bereiche).every((m) => m?.archiviert))
+    .filter((p) => !p.bereiche[bereich] && !ueberallArchiviert(p, bereich))
     .filter((p) => !begriff || [p.nummer, p.name, p.beschreibung].join(' ').toLowerCase().includes(begriff));
 }
 
@@ -266,8 +351,9 @@ export function useSucheOhneTreffer(
 }
 
 /**
- * Grau hinterlegter Abschnitt mit den Projekten, die andere Bereiche führen,
- * dieser aber nicht – ohne die, die in allen ihren Bereichen archiviert sind.
+ * Grau hinterlegter Abschnitt mit den Projekten, die andere Bereiche (oder das
+ * Controlling) führen, dieser aber nicht – ohne die, die im Controlling oder
+ * in allen ihren Bereichen archiviert sind (`ueberallArchiviert`).
  * „Übernehmen in …“ legt das Projekt im Bereich an – samt den geteilten
  * Projektbeteiligten.
  */
@@ -305,7 +391,13 @@ export function FremdeProjekte({ bereich, suche }: { bereich: ProjektBereich; su
               <div className="mono tertiary">{p.nummer}</div>
               <h2 className="gem-fremd-titel">{p.name || 'Ohne Bezeichnung'}</h2>
               {p.beschreibung ? <div className="small muted truncate">{p.beschreibung}</div> : null}
-              <ProjektMarken projekt={p} aus={bereich} label="Geführt in" />
+              {genannteBereiche(bereich).some((b) => p.bereiche[b]) ? (
+                <ProjektMarken projekt={p} aus={bereich} label="Geführt in" />
+              ) : herkunftOhneBereich(p, bereich) ? (
+                <div className="gem-marken">
+                  <span className="gem-marken-label">{herkunftOhneBereich(p, bereich)}</span>
+                </div>
+              ) : null}
               <div className="gem-fremd-fuss">
                 <button type="button" className="btn btn-sm btn-outline" onClick={() => uebernehmen(p)}>
                   <Icon name="importieren" size={12} /> Übernehmen in {BEREICH_TITEL[bereich]}
@@ -327,10 +419,11 @@ export function VerknuepfungsHinweis({ bereich, nummer }: { bereich: ProjektBere
   const register = useRegister();
   const n = nummer.trim().toLowerCase();
   if (!n) return null;
-  const p = register.projekte.find((x) => !x.bereiche[bereich] && x.nummer.trim().toLowerCase() === n);
+  // Ein im Controlling archiviertes Projekt verknüpft der Abgleich nicht (`abgleichen`, Schritt 3)
+  const p = register.projekte.find((x) => !x.bereiche[bereich] && !x.archiviert && x.nummer.trim().toLowerCase() === n);
   if (!p) return null;
   // Ein überall archiviertes Projekt steht nicht unter „Projekte aus anderen Bereichen“ – hier sagen, dass es eines ist
-  const archiviert = Object.values(p.bereiche).every((m) => m?.archiviert);
+  const archiviert = ueberallArchiviert(p, bereich);
   return (
     <Callout icon="↔">
       {`Die Projektnummer gehört zu „${projektTitel(p)}“${archiviert ? ' (dort archiviert)' : ''}. Beim Anlegen wird es damit verknüpft: Bezeichnung und Projektbeteiligte kommen von dort und gelten in allen Bereichen.`}
